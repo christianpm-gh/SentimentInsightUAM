@@ -18,13 +18,38 @@ from slugify import slugify
 
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 from ..core.browser import browser_ctx
-from .parser import parse_profile, parse_reviews, page_count
+from .parser import parse_profile, parse_reviews, page_count, review_count
 
 BASE = "https://www.misprofesores.com"
 
 # Directorios de salida
 HTML_OUTPUT_DIR = Path("data/outputs/html")
 JSON_OUTPUT_DIR = Path("data/outputs/profesores")
+
+
+def _remote_review_stats(html: str) -> Dict[str, Any]:
+    """Calcula metadatos sobre el número de reseñas disponibles.
+
+    Retorna un diccionario con tres claves:
+    - ``total_reviews``: Conteo total (preciso o estimado) de reseñas.
+    - ``pages``: Número total de páginas a recorrer.
+    - ``precise``: ``True`` si ``total_reviews`` proviene de un contador exacto.
+    """
+
+    total = review_count(html)
+    if total is not None:
+        pages = max(1, (total + 4) // 5)
+        return {"total_reviews": total, "pages": pages, "precise": True}
+
+    pages = page_count(html)
+    return {"total_reviews": pages * 5, "pages": pages, "precise": False}
+
+
+def _cache_is_valid(cached_reviews_count: int, stats: Dict[str, Any]) -> bool:
+    """Determina si el caché sigue siendo válido frente a los metadatos remotos."""
+
+    tolerance = 0 if stats["precise"] else 2
+    return abs(cached_reviews_count - stats["total_reviews"]) <= tolerance
 
 
 def _get_cached_data(prof_name: str) -> Optional[Dict[str, Any]]:
@@ -213,22 +238,30 @@ async def find_and_scrape(prof_name: str, school_hint: str = "UAM (Azcapotzalco)
         html = await page.content()
 
         prof = parse_profile(html)
-        pages = page_count(html)
 
-        # Calcular número esperado de reseñas
-        expected_reviews = pages * 5  # Aproximación (5 reseñas por página)
+        stats = _remote_review_stats(html)
+        pages = stats["pages"]
+        expected_reviews = stats["total_reviews"]
 
         # 4) Verificar si hay cambios respecto al caché
         if cached_data and not force:
             cached_reviews_count = len(cached_data.get("reviews", []))
 
             # Si el número de reseñas es el mismo, retornar caché
-            if abs(cached_reviews_count - expected_reviews) <= 5:  # Tolerancia de ±5
-                print(f"✓ Caché vigente para {prof_name} ({cached_reviews_count} reseñas)")
+            if _cache_is_valid(cached_reviews_count, stats):
+                print(
+                    f"✓ Caché vigente para {prof_name} ({cached_reviews_count} reseñas)"
+                    if stats["precise"]
+                    else f"✓ Caché vigente para {prof_name} (~{cached_reviews_count} reseñas)"
+                )
                 cached_data["cached"] = True
                 return cached_data
             else:
-                print(f"✓ Detectados cambios para {prof_name}: {cached_reviews_count} → ~{expected_reviews} reseñas")
+                print(
+                    f"✓ Detectados cambios para {prof_name}: {cached_reviews_count} → {expected_reviews} reseñas"
+                    if stats["precise"]
+                    else f"✓ Detectados cambios para {prof_name}: {cached_reviews_count} → ~{expected_reviews} reseñas"
+                )
 
         # 5) Scraping completo (hay cambios o no hay caché)
         print(f"⚙ Scrapeando {prof_name} ({pages} páginas)...")

@@ -191,7 +191,32 @@ def parse_reviews(html: str) -> List[Dict[str, Any]]:
     return out
 
 
-def page_count(html: str) -> int:
+def review_count(html: str, soup: Optional[BeautifulSoup] = None) -> Optional[int]:
+    """Obtiene el número total de reseñas disponibles para un profesor.
+
+    Extrae el contador mostrado en el conmutador de la tabla de reseñas
+    (``div.table-toggle.rating-count.active``). Si el contador no está
+    presente o no se puede interpretar, retorna ``None``.
+
+    Args:
+        html: Contenido HTML de la página con reseñas.
+        soup: Instancia opcional de :class:`BeautifulSoup` para reutilizar
+            un árbol ya parseado.
+
+    Returns:
+        Número total de reseñas o ``None`` si no se encuentra el contador.
+    """
+
+    s = soup if soup is not None else BeautifulSoup(html, "lxml")
+    cnt = s.select_one("div.table-toggle.rating-count.active")
+    if not cnt:
+        return None
+
+    n = _num(cnt.get_text())
+    return int(n) if n is not None else None
+
+
+def page_count(html: str, soup: Optional[BeautifulSoup] = None) -> int:
     """
     Calcula el número total de páginas de reseñas disponibles.
 
@@ -200,18 +225,17 @@ def page_count(html: str) -> int:
 
     Args:
         html: Contenido HTML de la página con reseñas
+        soup: Instancia opcional de :class:`BeautifulSoup` ya parseada
 
     Returns:
         Número total de páginas (mínimo 1)
     """
-    s = BeautifulSoup(html, "lxml")
+    s = soup if soup is not None else BeautifulSoup(html, "lxml")
 
     # Preferir contador total de reseñas (5 reseñas por página)
-    cnt = s.select_one("div.table-toggle.rating-count.active")
-    if cnt:
-        n = _num(cnt.get_text())
-        if n:
-            return max(1, math.ceil(n / 5))
+    total_reviews = review_count(html, soup=s)
+    if total_reviews is not None:
+        return max(1, math.ceil(total_reviews / 5))
 
     # Fallback: buscar el número máximo en los botones de paginación
     nums = [
