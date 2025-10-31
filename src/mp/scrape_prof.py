@@ -87,19 +87,25 @@ def _save_json(prof_name: str, data: Dict[str, Any]) -> Path:
     return json_file
 
 
-async def open_with_backoff(page, url: str) -> None:
+async def open_with_backoff(
+    page, url: str, *, wait_selector: Optional[str] = None, timeout: int = 45000
+) -> None:
     """
     Abre una URL con un tiempo de espera aleatorio para evitar detección.
 
     Args:
         page: Instancia de página de Playwright
         url: URL a navegar
+        wait_selector: Selector CSS opcional a esperar tras la navegación
+        timeout: Tiempo máximo de espera para la navegación
     """
-    await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+    await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+    if wait_selector:
+        await page.wait_for_selector(wait_selector, timeout=30000)
     await page.wait_for_timeout(400 + int(600 * random.random()))
 
 @retry(wait=wait_random_exponential(min=1, max=8), stop=stop_after_attempt(4))
-async def fetch_prof_html(ctx, prof_url: str) -> str:
+async def fetch_prof_html(ctx, prof_url: str, *, wait_selector: Optional[str] = None) -> str:
     """
     Obtiene el HTML de la página de un profesor con reintentos automáticos.
 
@@ -109,6 +115,7 @@ async def fetch_prof_html(ctx, prof_url: str) -> str:
     Args:
         ctx: Contexto del navegador de Playwright
         prof_url: URL del perfil del profesor
+        wait_selector: Selector CSS opcional a esperar tras la navegación
 
     Returns:
         str: Contenido HTML de la página
@@ -117,10 +124,11 @@ async def fetch_prof_html(ctx, prof_url: str) -> str:
         Exception: Sí fallan todos los intentos después de 4 reintentos
     """
     page = await ctx.new_page()
-    await page.goto(prof_url, wait_until="domcontentloaded", timeout=45000)
-    html = await page.content()
-    await page.close()
-    return html
+    try:
+        await open_with_backoff(page, prof_url, wait_selector=wait_selector)
+        return await page.content()
+    finally:
+        await page.close()
 
 async def find_and_scrape(prof_name: str, school_hint: str = "UAM (Azcapotzalco)", force: bool = False) -> Dict[str, Any]:
     """
@@ -203,14 +211,17 @@ async def find_and_scrape(prof_name: str, school_hint: str = "UAM (Azcapotzalco)
         if href.startswith("/"):
             href = f"{BASE}{href}"
 
-        # Navegar directo al perfil y esperar contenedores del perfil
-        await page.goto(href, wait_until="domcontentloaded", timeout=45000)
-        await page.wait_for_selector("div.rating-breakdown, div.rating-filter.togglable", timeout=30000)
-        # --- Fin búsqueda mejorada ---
+        profile_url = href
 
-        # 3) Extraer información del perfil
-        profile_url = page.url
-        html = await page.content()
+        # Ya no necesitamos la página de búsqueda
+        await page.close()
+
+        # 3) Extraer información del perfil usando backoff consistente
+        html = await fetch_prof_html(
+            ctx,
+            profile_url,
+            wait_selector="div.rating-breakdown, div.rating-filter.togglable",
+        )
 
         prof = parse_profile(html)
         pages = page_count(html)
@@ -232,18 +243,19 @@ async def find_and_scrape(prof_name: str, school_hint: str = "UAM (Azcapotzalco)
 
         # 5) Scraping completo (hay cambios o no hay caché)
         print(f"⚙ Scrapeando {prof_name} ({pages} páginas)...")
-        all_reviews = []
-        all_html_pages = []
+        all_html_pages = [html]
+        all_reviews = parse_reviews(html)
 
-        for p in range(1, pages + 1):
-            url = profile_url if p == 1 else f"{profile_url}?pag={p}"
-            if p > 1:
-                await page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                await page.wait_for_selector("div.rating-filter.togglable table.tftable", timeout=30000)
-                html = await page.content()
+        for p in range(2, pages + 1):
+            page_url = f"{profile_url}?pag={p}"
+            html_page = await fetch_prof_html(
+                ctx,
+                page_url,
+                wait_selector="div.rating-filter.togglable table.tftable",
+            )
 
-            all_html_pages.append(html)
-            all_reviews += parse_reviews(html)
+            all_html_pages.append(html_page)
+            all_reviews += parse_reviews(html_page)
 
         # Agregar todas las reseñas al perfil
         prof["reviews"] = all_reviews
