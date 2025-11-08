@@ -314,7 +314,12 @@ HEADLESS=true
 
 ## 🤝 Contribuciones
 
-Las contribuciones son bienvenidas. Por favor, sigue el flujo de trabajo de Git establecido en `git_workflow.md`.
+Las contribuciones son bienvenidas. Por favor, consulta la documentación en `.github/`:
+
+- **[CONTRIBUTING.md](.github/CONTRIBUTING.md)** - Guía completa de contribución
+- **[COMMIT_CONVENTION.md](.github/COMMIT_CONVENTION.md)** - Convención de mensajes de commit
+- **[BRANCH_NAMING.md](.github/BRANCH_NAMING.md)** - Convención de nombres de ramas
+- **[PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md)** - Plantilla para PRs
 
 ## 📄 Licencia
 
