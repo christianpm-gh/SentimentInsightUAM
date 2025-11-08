@@ -424,6 +424,83 @@ python -m src.cli prof --name "Nombre Completo"
 - Búsqueda directa sin menú
 - Útil para automatización
 
+**4. Scrapear todos los profesores (modo masivo)**
+```bash
+python -m src.cli scrape-all
+```
+- Scrapea automáticamente todos los profesores del directorio UAM
+- Implementa caché inteligente por profesor
+- Solo re-scrapea si detecta cambios en el número de reseñas
+- Aplica delays entre requests para evitar bloqueos
+- Muestra progreso en tiempo real
+- Genera resumen final con estadísticas
+
+**Características del Scraping Masivo:**
+
+1. **Detección de Cambios Automática**
+   ```python
+   # Para cada profesor:
+   # 1. Verifica si existe caché
+   # 2. Si existe, compara número de reseñas
+   # 3. Solo scrapea si hay diferencias
+   cached_reviews = len(cached_data.get("reviews", []))
+   current_reviews = page_count(html) * 5
+   
+   if abs(cached_reviews - current_reviews) <= 5:
+       # Usa caché (tolerancia de 5 reseñas)
+       return cached_data
+   ```
+
+2. **Rate Limiting Inteligente**
+   ```python
+   # Delays variables entre profesores (2-4 segundos)
+   delay = 2 + (2 * (idx % 3))
+   await asyncio.sleep(delay)
+   ```
+
+3. **Manejo de Errores Robusto**
+   - Captura excepciones por profesor individual
+   - Continúa con el siguiente en caso de error
+   - No interrumpe el proceso completo
+   - Registra errores en el resumen final
+
+4. **Salida del Comando**
+   ```
+   Iniciando scraping de 150 profesores...
+   ================================================================================
+   
+   [1/150] Procesando: Juan Perez Garcia
+     -> Scrapeado exitosamente (47 reseñas)
+     -> Esperando 2s antes del siguiente...
+   
+   [2/150] Procesando: Maria Lopez Hernandez
+     -> Cache vigente (32 reseñas)
+     -> Esperando 4s antes del siguiente...
+   
+   ...
+   
+   ================================================================================
+   RESUMEN DE SCRAPING
+   ================================================================================
+   Total profesores procesados: 150
+   Scrapeados exitosamente: 28
+   Obtenidos de cache: 119
+   Errores: 3
+   ================================================================================
+   ```
+
+5. **Integración con Sistema Existente**
+   - Reutiliza `find_and_scrape()` con toda su lógica de caché
+   - Compatible con sistema de reintentos (tenacity)
+   - Guarda HTML y JSON automáticamente
+   - No requiere configuración adicional
+
+6. **Prevención de Bloqueos**
+   - Delays variables entre profesores evitan patrones detectables
+   - Backoff exponencial en caso de errores (via tenacity)
+   - User agent realista configurado en browser_ctx()
+   - Timeouts apropiados para cada operación
+
 #### Flujo de Datos
 
 ```
