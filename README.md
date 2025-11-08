@@ -10,6 +10,11 @@ Sistema de scraping y análisis de reseñas de profesores de la Universidad Aut�
   - Navegación directa por URL para evitar timeouts
   - Paginación automática de reseñas
   - Reintentos con backoff exponencial
+- **Scraping masivo**: Comando `scrape-all` para procesar todos los profesores automáticamente
+  - Procesamiento secuencial con delays inteligentes
+  - Detección automática de cambios por profesor
+  - Resumen de progreso en tiempo real
+  - Manejo robusto de errores sin interrumpir el proceso
 - **Caché inteligente**: 
   - Detecta automáticamente si un profesor ya fue scrapeado
   - Compara número de reseñas para detectar cambios
@@ -89,7 +94,64 @@ Se mostrará un menú numerado con todos los profesores disponibles.
 python -m src.cli prof --name "Juan Pérez García"
 ```
 
-### 3. Salida de datos
+### 3. Scrapear todos los profesores
+
+Procesa automáticamente todos los profesores del directorio UAM con caché inteligente:
+
+```bash
+python -m src.cli scrape-all
+```
+
+**Características del scraping masivo:**
+
+- Procesa todos los profesores secuencialmente
+- Aplica delays de 2-4 segundos entre profesores para evitar bloqueos
+- Detecta automáticamente si un profesor necesita actualización
+- Solo re-scrapea cuando hay cambios en el número de reseñas
+- Muestra progreso en tiempo real con contador
+- Maneja errores de forma individual sin detener el proceso completo
+- Genera resumen final con estadísticas
+
+**Salida ejemplo:**
+
+```
+Iniciando scraping de 150 profesores...
+================================================================================
+
+[1/150] Procesando: Juan Perez Garcia
+  -> Scrapeado exitosamente (47 reseñas)
+  -> Esperando 2s antes del siguiente...
+
+[2/150] Procesando: Maria Lopez Hernandez
+  -> Cache vigente (32 reseñas)
+  -> Esperando 4s antes del siguiente...
+
+[3/150] Procesando: Carlos Rodriguez Torres
+  -> Detectados cambios: 28 -> ~35 reseñas
+  -> Scrapeado exitosamente (35 reseñas)
+  -> Esperando 2s antes del siguiente...
+
+...
+
+================================================================================
+RESUMEN DE SCRAPING
+================================================================================
+Total profesores procesados: 150
+Scrapeados exitosamente: 28
+Obtenidos de cache: 119
+Errores: 3
+================================================================================
+```
+
+**Prevención de bloqueos:**
+
+- Delays variables (no detectables como patrón automático)
+- User agent realista configurado en el navegador
+- Reintentos automáticos con backoff exponencial (via tenacity)
+- Timeouts apropiados para cada operación
+- Respeto a los límites del servidor
+
+### 4. Salida de datos
 
 El scraper implementa **persistencia automática** con dos formatos:
 
@@ -217,10 +279,11 @@ Scraper robusto con:
 
 ### `src.cli`
 
-CLI con dos comandos principales:
+CLI con tres comandos principales:
 
-- `nombres-uam`: Extrae lista de profesores
-- `prof`: Scrapea perfil (interactivo o directo)
+- `nombres-uam`: Extrae lista de profesores del directorio UAM
+- `prof`: Scrapea perfil individual (interactivo o directo)
+- `scrape-all`: Scrapea todos los profesores con caché inteligente
 
 ## ⚙️ Configuración
 
