@@ -234,6 +234,238 @@ python -m src.mp.scrape_prof "Nombre Profesor"   # Scraper individual
 HEADLESS=true    # Modo headless del navegador (true/false)
 ```
 
+### Entorno Virtual Python (venv)
+
+**CRÍTICO**: SIEMPRE usar el entorno virtual para ejecutar código Python.
+
+#### Activación del venv
+```bash
+# Activar venv (hacer SIEMPRE antes de ejecutar Python)
+source venv/bin/activate
+
+# Verificar que estés en el venv (debe mostrar la ruta del venv)
+which python
+# Salida esperada: /home/mr_ciem/dev/python-dev/SentimentInsightUAM/venv/bin/python
+```
+
+#### Ejecución correcta de comandos Python
+
+**✅ CORRECTO - Con venv activado:**
+```bash
+# Activar primero
+source venv/bin/activate
+
+# Luego ejecutar comandos Python
+python -m src.cli prof --name "Nombre"
+python tests/test_scrape_josue_padilla.py
+python scripts/clean_databases.py --all
+pip install -r requirements.txt
+```
+
+**✅ ALTERNATIVA - Comando directo (sin activar):**
+```bash
+# Usar la ruta completa al Python del venv
+/home/mr_ciem/dev/python-dev/SentimentInsightUAM/venv/bin/python -m src.cli prof
+```
+
+**❌ INCORRECTO - Sin venv:**
+```bash
+# ❌ Esto usa el Python del sistema, NO el venv
+python -m src.cli prof
+
+# Causará errores como:
+# - ModuleNotFoundError: No module named 'playwright'
+# - ImportError: No module named 'sqlalchemy'
+```
+
+#### Creación del venv (primera vez)
+```bash
+# Crear venv (solo primera vez o después de eliminarlo)
+python3 -m venv venv
+
+# Activar
+source venv/bin/activate
+
+# Instalar dependencias
+pip install --upgrade pip
+pip install -r requirements.txt
+python -m playwright install chromium
+```
+
+#### Comandos con run_in_terminal tool
+
+**Cuando uses run_in_terminal, SIEMPRE activa el venv primero:**
+
+```bash
+# ✅ Formato correcto para run_in_terminal
+cd /home/mr_ciem/dev/python-dev/SentimentInsightUAM && source venv/bin/activate && python script.py
+
+# También válido con &&
+source venv/bin/activate && python -m src.cli prof
+
+# Para comandos largos, usar timeout si es necesario
+timeout 300 python tests/test_integration.py
+```
+
+#### Verificación del entorno
+
+```bash
+# Ver qué Python se está usando
+which python
+# Debe mostrar: .../SentimentInsightUAM/venv/bin/python
+
+# Ver paquetes instalados en el venv
+pip list
+
+# Verificar versión de Python
+python --version
+# Debe ser Python 3.11+ o 3.12+
+
+# Verificar que las dependencias estén instaladas
+python -c "import sqlalchemy; print(f'SQLAlchemy {sqlalchemy.__version__}')"
+python -c "import playwright; print('Playwright OK')"
+```
+
+#### Solución de Problemas
+
+**Problema: ModuleNotFoundError**
+```bash
+# Solución:
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Problema: El venv no se activa**
+```bash
+# Recrear el venv
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Problema: Comando no encuentra módulos de src/**
+```bash
+# Ejecutar desde la raíz del proyecto
+cd /home/mr_ciem/dev/python-dev/SentimentInsightUAM
+source venv/bin/activate
+python -m src.cli prof  # -m asegura que src/ esté en el path
+```
+
+---
+
+## 🗄️ Comandos de Base de Datos
+
+### Docker
+```bash
+# Iniciar contenedores (PostgreSQL + MongoDB)
+make docker-up
+
+# Detener contenedores
+make docker-down
+
+# Ver logs
+make docker-logs
+
+# Ver estado
+make db-status
+
+# Limpiar todo (¡cuidado! elimina volúmenes)
+make docker-clean
+```
+
+### Limpieza de Datos
+
+**Script de limpieza de bases de datos** - `scripts/clean_databases.py`
+
+Este script elimina TODOS los datos de las bases de datos manteniendo las estructuras (esquemas, índices).
+
+```bash
+# Activar venv primero
+source venv/bin/activate
+
+# Modo interactivo (pregunta qué limpiar)
+python scripts/clean_databases.py
+
+# Limpiar ambas bases de datos sin confirmación
+python scripts/clean_databases.py --all
+
+# Limpiar solo PostgreSQL
+python scripts/clean_databases.py --postgres
+
+# Limpiar solo MongoDB
+python scripts/clean_databases.py --mongo
+
+# Solo verificar estado (no limpia)
+python scripts/clean_databases.py --verify
+
+# Modo silencioso (solo errores)
+python scripts/clean_databases.py --all --quiet
+```
+
+**Salida del script:**
+- ✅ Tablas/colecciones eliminadas con conteo
+- ✅ Secuencias de PostgreSQL reiniciadas a 1
+- ✅ Verificación final del estado
+- ✅ Colores y formato legible
+
+**Cuándo usar:**
+- Antes de probar features nuevas desde cero
+- Después de tests que dejan datos de prueba
+- Para resetear el entorno de desarrollo
+- Antes de migraciones de datos históricos
+
+### Acceso Directo a Bases de Datos
+```bash
+# PostgreSQL (psql)
+make db-psql
+# O manualmente:
+docker exec -it sentiment_postgres psql -U sentiment_admin -d sentiment_uam_db
+
+# MongoDB (mongosh)
+make db-mongo
+# O manualmente:
+docker exec -it sentiment_mongo mongosh -u sentiment_admin -p sentiment_2024 --authenticationDatabase admin sentiment_uam_db
+```
+
+### Consultas Útiles
+
+**PostgreSQL:**
+```sql
+-- Ver todos los profesores
+SELECT id, nombre_limpio, slug FROM profesores;
+
+-- Ver reseñas de un profesor
+SELECT r.fecha, r.curso_nombre, r.calificacion_general, r.comentario_preview
+FROM resenias_metadata r
+JOIN profesores p ON r.profesor_id = p.id
+WHERE p.nombre_limpio ILIKE '%nombre%';
+
+-- Ver estadísticas
+SELECT 
+    COUNT(DISTINCT p.id) as total_profesores,
+    COUNT(r.id) as total_resenias,
+    COUNT(o.mongo_opinion_id) as con_opinion_mongo
+FROM profesores p
+LEFT JOIN resenias_metadata r ON r.profesor_id = p.id
+LEFT JOIN resenias_metadata o ON o.mongo_opinion_id IS NOT NULL;
+```
+
+**MongoDB:**
+```javascript
+// Contar opiniones
+db.opiniones.countDocuments({})
+
+// Ver opiniones de un profesor
+db.opiniones.find({"metadata.profesor_id": 2}).pretty()
+
+// Opiniones pendientes de análisis
+db.opiniones.countDocuments({"sentimiento_general.analizado": false})
+
+// Búsqueda de texto
+db.opiniones.find({$text: {$search: "excelente"}})
+```
+
 ---
 
 ## 🤖 Guía para Implementar Nuevas Features

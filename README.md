@@ -479,6 +479,47 @@ make db-reset          # Reiniciar (DESTRUYE DATOS)
 make install           # Instalar dependencias Python
 ```
 
+### Limpieza de Bases de Datos
+
+El proyecto incluye un script de limpieza que elimina todos los datos manteniendo las estructuras (esquemas, índices):
+
+```bash
+# Activar entorno virtual primero
+source venv/bin/activate
+
+# Modo interactivo (pregunta qué limpiar)
+python scripts/clean_databases.py
+
+# Limpiar ambas bases de datos sin confirmación
+python scripts/clean_databases.py --all
+
+# Limpiar solo PostgreSQL
+python scripts/clean_databases.py --postgres
+
+# Limpiar solo MongoDB
+python scripts/clean_databases.py --mongo
+
+# Solo verificar estado (no limpia)
+python scripts/clean_databases.py --verify
+
+# Modo silencioso (solo errores)
+python scripts/clean_databases.py --all --quiet
+```
+
+**Cuándo usar el script de limpieza:**
+- Antes de probar features nuevas desde cero
+- Después de tests que dejan datos de prueba
+- Para resetear el entorno de desarrollo
+- Antes de migraciones de datos históricos
+
+**Qué hace el script:**
+- ✅ Elimina todos los registros de tablas PostgreSQL (respetando orden de foreign keys)
+- ✅ Reinicia secuencias de auto-increment a 1
+- ✅ Elimina todos los documentos de colecciones MongoDB
+- ✅ Mantiene esquemas, índices y estructuras intactas
+- ✅ Muestra contadores de registros eliminados
+- ✅ Verifica estado final de las bases de datos
+
 ## 📝 Notas Importantes
 
 - **Uso responsable**: Este scraper es para fines educativos. Respeta los Términos de Servicio de los sitios web.
@@ -492,12 +533,14 @@ make install           # Instalar dependencias Python
 
 ## 🔮 Próximas Características
 
-- [ ] Persistencia en PostgreSQL (datos estructurados)
-- [ ] Persistencia en MongoDB (comentarios/opiniones)
+- [x] Persistencia en PostgreSQL (datos estructurados) - ✅ v1.2.0
+- [x] Persistencia en MongoDB (comentarios/opiniones) - ✅ v1.2.0
+- [x] Script de limpieza de bases de datos - ✅ v1.2.0
 - [ ] Análisis de sentimiento con BERT
 - [ ] API REST para consulta de datos
 - [ ] Jobs programados con scheduler
 - [ ] Dashboard de visualización
+- [ ] Migración de datos históricos JSON a BD
 
 ## 🤝 Contribuciones
 
