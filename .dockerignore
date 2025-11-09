@@ -1,0 +1,72 @@
+# ============================================================================
+# .dockerignore - SentimentInsightUAM
+# ============================================================================
+# Archivos y directorios que no deben incluirse en contextos de build de Docker
+# ============================================================================
+
+# Entornos virtuales de Python
+.venv/
+venv/
+env/
+ENV/
+
+# Archivos de Python compilados
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Datos de scraping (pueden ser grandes)
+data/outputs/html/*.html
+data/outputs/profesores/*.json
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Documentación local (ya está en la imagen si se necesita)
+docs/
+
+# Variables de entorno (seguridad)
+.env
+.env.*
+
+# IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Node modules (si se usa frontend en futuro)
+node_modules/
+
+# Coverage y tests
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/

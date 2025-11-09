@@ -29,21 +29,119 @@ Sistema de scraping y análisis de reseñas de profesores de la Universidad Aut�
 
 ## 📋 Requisitos
 
+### Opción A: Con Docker (Recomendado)
+
+- **Docker** >= 20.10
+- **Docker Compose** >= 2.0
+- Python 3.11+ (solo para el scraper)
+
+### Opción B: Sin Docker
+
 - Python 3.11+
+- PostgreSQL >= 15.0
+- MongoDB >= 7.0
 - Playwright (Chromium)
 - BeautifulSoup4
 - Dependencias listadas en `requirements.txt`
 
 ## 🚀 Instalación
 
-### 1. Clonar el repositorio
+### Opción A: Con Docker (Recomendado para Desarrollo)
+
+Esta opción configura automáticamente las bases de datos PostgreSQL y MongoDB en contenedores aislados.
+
+#### 1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/christianpm-gh/SentimentInsightUAM.git
 cd SentimentInsightUAM
 ```
 
-### 2. Crear entorno virtual
+#### 2. Configurar variables de entorno
+
+```bash
+# Copiar archivo de configuración para Docker
+cp .env.docker .env
+
+# (Opcional) Editar contraseñas para producción
+nano .env
+```
+
+#### 3. Iniciar bases de datos con Docker
+
+```bash
+# Opción 1: Con Makefile (más conveniente)
+make docker-up
+
+# Opción 2: Docker Compose directo
+docker-compose up -d
+```
+
+Esto iniciará:
+- ✅ PostgreSQL 15 en puerto 5432
+- ✅ MongoDB 7.0 en puerto 27017
+- ✅ Scripts de inicialización ejecutados automáticamente
+- ✅ 8 tablas PostgreSQL creadas
+- ✅ 2 colecciones MongoDB creadas
+- ✅ 21 etiquetas iniciales insertadas
+
+#### 4. Instalar dependencias de Python
+
+```bash
+# Crear entorno virtual
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# o: .venv\Scripts\activate  # Windows
+
+# Instalar dependencias
+make install
+# o manualmente:
+pip install -r requirements.txt
+python -m playwright install chromium
+```
+
+#### 5. Verificar configuración
+
+```bash
+# Verificar estado de bases de datos
+make db-status
+
+# Conectar a PostgreSQL
+make db-psql
+
+# Conectar a MongoDB
+make db-mongo
+```
+
+**¡Listo!** Las bases de datos están configuradas y listas para usar.
+
+**Comandos útiles con Docker:**
+
+```bash
+make help              # Ver todos los comandos disponibles
+make docker-up         # Iniciar contenedores
+make docker-down       # Detener contenedores
+make docker-logs       # Ver logs en tiempo real
+make db-status         # Verificar estado de bases de datos
+make db-reset          # Reiniciar bases de datos (DESTRUYE DATOS)
+```
+
+**Documentación completa:** Ver [docs/DOCKER_SETUP.md](docs/DOCKER_SETUP.md)
+
+---
+
+### Opción B: Instalación Manual (Sin Docker)
+
+Para instalación manual de PostgreSQL y MongoDB, consulta la guía completa en [docs/DATABASE_SETUP.md](docs/DATABASE_SETUP.md).
+
+#### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/christianpm-gh/SentimentInsightUAM.git
+cd SentimentInsightUAM
+```
+
+#### 2. Crear entorno virtual
 
 ```bash
 python -m venv .venv
@@ -55,19 +153,29 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3. Instalar dependencias
+#### 3. Instalar dependencias
 
 ```bash
 pip install -r requirements.txt
 python -m playwright install chromium
 ```
 
-### 4. Configurar variables de entorno (opcional)
+#### 4. Configurar bases de datos
+
+Sigue la guía detallada en [docs/DATABASE_SETUP.md](docs/DATABASE_SETUP.md) para:
+- Instalar PostgreSQL 15+
+- Instalar MongoDB 7.0+
+- Ejecutar scripts de inicialización
+- Configurar usuarios y permisos
+
+#### 5. Configurar variables de entorno
 
 ```bash
-# Crear archivo .env
-echo HEADLESS=true > .env
+# Crear archivo .env con tus credenciales
+nano .env
 ```
+
+Ver ejemplo en `.env.docker` para la estructura requerida.
 
 ## 💻 Uso
 
@@ -239,6 +347,33 @@ SentimentInsightUAM/
 │       ├── html/             # HTML original (auditoría)
 │       └── profesores/       # JSONs estructurados
 ├── docs/
+│   ├── TECHNICAL_DOCUMENTATION.md  # Documentación técnica completa
+│   ├── DATABASE_DESIGN.md          # Diseño de bases de datos
+│   ├── DATABASE_SETUP.md           # Configuración manual de BD
+│   └── DOCKER_SETUP.md             # Configuración con Docker
+├── scripts/
+│   ├── init_postgres.sql     # Inicialización PostgreSQL
+│   ├── init_mongo.js         # Inicialización MongoDB
+│   └── setup_mongo_user.sh   # Setup de usuario MongoDB
+├── docker-compose.yml        # Orquestación de contenedores
+├── Makefile                  # Comandos útiles
+├── .env.docker               # Template de variables de entorno
+├── requirements.txt
+├── .env                      # Variables de entorno (local)
+└── README.md
+```
+│   │   ├── __init__.py
+│   │   └── nombres_uam.py    # Scraper del directorio UAM
+│   └── mp/
+│       ├── __init__.py
+│       ├── parser.py         # Parser HTML de MisProfesores
+│       └── scrape_prof.py    # Scraper con caché inteligente
+├── data/
+│   ├── inputs/               # Listas de profesores
+│   └── outputs/
+│       ├── html/             # HTML original (auditoría)
+│       └── profesores/       # JSONs estructurados
+├── docs/
 │   └── TECHNICAL_DOCUMENTATION.md  # Documentación técnica completa
 ├── requirements.txt
 ├── .env                      # Variables de entorno (opcional)
@@ -289,9 +424,59 @@ CLI con tres comandos principales:
 
 ### Variables de Entorno (`.env`)
 
+#### Con Docker
+
+El archivo `.env.docker` contiene todas las configuraciones necesarias:
+
 ```env
-# Modo headless del navegador (true/false)
+# PostgreSQL
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=sentiment_uam_db
+POSTGRES_USER=sentiment_admin
+POSTGRES_PASSWORD=dev_password_2024
+
+# MongoDB
+MONGO_HOST=localhost
+MONGO_PORT=27017
+MONGO_DB=sentiment_uam_nlp
+MONGO_USER=sentiment_admin
+MONGO_PASSWORD=dev_password_2024
+
+# URLs de conexión
+DATABASE_URL=postgresql+asyncpg://sentiment_admin:dev_password_2024@localhost:5432/sentiment_uam_db
+MONGO_URL=mongodb://sentiment_admin:dev_password_2024@localhost:27017/sentiment_uam_nlp?authSource=sentiment_uam_nlp
+
+# Scraper
 HEADLESS=true
+RATE_MIN_MS=400
+RATE_MAX_MS=1200
+```
+
+#### Sin Docker (Instalación Manual)
+
+Crea un archivo `.env` con tus credenciales personalizadas. Ver [docs/DATABASE_SETUP.md](docs/DATABASE_SETUP.md) para más detalles.
+
+### Comandos con Docker
+
+```bash
+# Ver ayuda completa
+make help
+
+# Gestión de contenedores
+make docker-up         # Iniciar bases de datos
+make docker-down       # Detener bases de datos
+make docker-restart    # Reiniciar bases de datos
+make docker-logs       # Ver logs en tiempo real
+
+# Gestión de bases de datos
+make db-status         # Verificar estado
+make db-psql           # Conectar a PostgreSQL
+make db-mongo          # Conectar a MongoDB
+make db-reset          # Reiniciar (DESTRUYE DATOS)
+
+# Desarrollo
+make install           # Instalar dependencias Python
 ```
 
 ## 📝 Notas Importantes
@@ -300,8 +485,10 @@ HEADLESS=true
 - **Rate limiting**: El código incluye delays aleatorios para evitar sobrecarga de servidores.
 - **Caché automático**: El sistema detecta automáticamente si un profesor ya fue scrapeado y evita scraping redundante.
 - **Persistencia**: Todos los datos se guardan en disco automáticamente (HTML + JSON).
+- **Bases de datos**: PostgreSQL para datos estructurados, MongoDB para análisis de sentimiento (v1.1.0+).
+- **Docker**: Configuración con contenedores para desarrollo rápido y reproducible (v1.1.1+).
 - **Timeouts**: Los timeouts están configurados para 45 segundos en navegación y 30 segundos en selectores.
-- **Próximas características**: Persistencia en PostgreSQL y MongoDB, análisis de sentimiento con BERT.
+- **Próximas características**: API REST con FastAPI, análisis de sentimiento con BERT, dashboard de visualización.
 
 ## 🔮 Próximas Características
 
