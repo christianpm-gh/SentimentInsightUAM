@@ -109,8 +109,8 @@ CREATE TABLE perfiles (
     profesor_id INTEGER NOT NULL REFERENCES profesores(id) ON DELETE CASCADE,
     
     -- Métricas principales
-    calidad_general DECIMAL(3, 2) CHECK (calidad_general >= 0 AND calidad_general <= 10),
-    dificultad DECIMAL(3, 2) CHECK (dificultad >= 0 AND dificultad <= 10),
+    calidad_general DECIMAL(4, 2) CHECK (calidad_general >= 0 AND calidad_general <= 10),
+    dificultad DECIMAL(4, 2) CHECK (dificultad >= 0 AND dificultad <= 10),
     porcentaje_recomendacion DECIMAL(5, 2) CHECK (porcentaje_recomendacion >= 0 AND porcentaje_recomendacion <= 100),
     
     -- Metadatos de scraping
@@ -243,8 +243,8 @@ CREATE TABLE resenias_metadata (
     
     -- Datos de la reseña
     fecha_resenia DATE NOT NULL,
-    calidad_general DECIMAL(3, 2) CHECK (calidad_general >= 0 AND calidad_general <= 10),
-    facilidad DECIMAL(3, 2) CHECK (facilidad >= 0 AND facilidad <= 10),
+    calidad_general DECIMAL(4, 2) CHECK (calidad_general >= 0 AND calidad_general <= 10),
+    facilidad DECIMAL(4, 2) CHECK (facilidad >= 0 AND facilidad <= 10),
     
     -- Metadatos categóricos
     asistencia VARCHAR(50),
