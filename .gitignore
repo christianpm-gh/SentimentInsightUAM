@@ -3,6 +3,14 @@ __pycache__/
 *.pyc
 .venv/
 .env
+*.py[cod]
+*$py.class
+*.so
+
+# Entornos virtuales
+venv/
+env/
+ENV/
 
 # Playwright
 playwright-report/
@@ -13,8 +21,38 @@ test-results/
 # IDE
 .idea/
 .vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
 
 # Datos
 data/outputs/html/
 data/outputs/profesores/*.json
 
+# Docker (solo archivos locales, no templates)
+.env.local
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Coverage y tests
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/

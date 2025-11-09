@@ -6,3 +6,7 @@ python-slugify>=8.0
 tenacity>=9.0
 python-dotenv>=1.0
 
+# Base de datos (para tests de integración)
+psycopg2-binary>=2.9
+pymongo>=4.8
+
