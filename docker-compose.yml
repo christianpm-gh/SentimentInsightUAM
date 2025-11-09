@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: sentiment_postgres
+    environment:
+      POSTGRES_DB: sentiment_uam_db
+      POSTGRES_USER: sentiment_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=es_MX.UTF-8"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - sentiment_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentiment_admin -d sentiment_uam_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7.0
+    container_name: sentiment_mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ADMIN_PASSWORD:-change_me_admin}
+      MONGO_INITDB_DATABASE: sentiment_uam_nlp
+      # Variables para el script de setup
+      MONGO_USER: ${MONGO_USER:-sentiment_admin}
+      MONGO_PASSWORD: ${MONGO_PASSWORD:-dev_password_2024}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+      - ./scripts/init_mongo.js:/docker-entrypoint-initdb.d/init.js:ro
+    networks:
+      - sentiment_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: sentiment_postgres_data
+  mongo_data:
+    name: sentiment_mongo_data
+  mongo_config:
+    name: sentiment_mongo_config
+
+networks:
+  sentiment_network:
+    driver: bridge
