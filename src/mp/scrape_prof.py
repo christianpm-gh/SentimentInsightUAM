@@ -253,29 +253,29 @@ async def find_and_scrape(prof_name: str, school_hint: str = "UAM (Azcapotzalco)
             all_html_pages.append(html)
             all_reviews += parse_reviews(html)
 
-            # Agregar todas las reseñas al perfil
-            prof["reviews"] = all_reviews
-            prof["cached"] = False
+        # Agregar todas las reseñas al perfil
+        prof["reviews"] = all_reviews
+        prof["cached"] = False
 
-            # 6) Guardar HTML y JSON
-            # Guardar HTML de la primera página (más representativo)
-            html_path = _save_html(prof_name, all_html_pages[0])
-            json_path = _save_json(prof_name, prof)
+        # 6) Guardar HTML y JSON
+        # Guardar HTML de la primera página (más representativo)
+        html_path = _save_html(prof_name, all_html_pages[0])
+        json_path = _save_json(prof_name, prof)
 
-            print(f"✓ Guardado: HTML en {html_path.name}, JSON en {json_path.name}")
-            print(f"✓ Total reseñas extraídas: {len(all_reviews)}")
-            
-            # 7) Guardar en bases de datos (PostgreSQL + MongoDB)
-            if DB_ENABLED:
-                try:
-                    print("\n💾 Guardando en bases de datos...")
-                    profesor_id = await guardar_profesor_completo(prof, url_misprofesores=profile_url)
-                    print(f"✅ Datos guardados en BD (Profesor ID={profesor_id})")
-                except Exception as e:
-                    print(f"⚠ Error al guardar en BD: {e}")
-                    print("   Los datos JSON se mantienen como respaldo")
+        print(f"✓ Guardado: HTML en {html_path.name}, JSON en {json_path.name}")
+        print(f"✓ Total reseñas extraídas: {len(all_reviews)}")
+        
+        # 7) Guardar en bases de datos (PostgreSQL + MongoDB)
+        if DB_ENABLED:
+            try:
+                print("\n💾 Guardando en bases de datos...")
+                profesor_id = await guardar_profesor_completo(prof, url_misprofesores=profile_url)
+                print(f"✅ Datos guardados en BD (Profesor ID={profesor_id})")
+            except Exception as e:
+                print(f"⚠ Error al guardar en BD: {e}")
+                print("   Los datos JSON se mantienen como respaldo")
 
-            return prof
+        return prof
 
 
 if __name__ == "__main__":
