@@ -25,19 +25,20 @@ Este CHANGELOG documenta:
 
 ---
 
-## [Unreleased]
+## [1.2.1] - 2025-11-10
 
 ### 🐛 Corregido (Fixed)
 - **Bug crítico de scraping: Solo extraía 5 reseñas por profesor**
   - Corregida indentación incorrecta en `src/mp/scrape_prof.py`
-  - El código de guardado estaba dentro del bucle `for`, causando return prematuro
+  - El código de guardado estaba dentro del bucle `for`, causando return prematuro después de la primera página
   - Ahora extrae todas las reseñas de todas las páginas correctamente
-  - Ejemplo: Esiquio Gutierrez ahora extrae 153 reseñas (31 páginas) en lugar de 5
-  - Regresión introducida en v1.2.0 (PR #8), funcionalidad restaurada de v1.0.0
+  - Ejemplo verificado: Esiquio Gutierrez extrae 153 reseñas (31 páginas) en lugar de 5
+  - Regresión introducida en v1.2.0 (commit 9c6a9d4), funcionalidad restaurada de v1.0.0 (commit bdbf6d5)
+  - Impacto: Todos los profesores scrapeados en v1.2.0 tienen datos incompletos
 
 ---
 
-## [1.1.1] - 2025-11-09
+## [1.2.0] - 2025-11-09
 
 ### ✅ Añadido (Added)
 - **Soporte completo para Docker Compose**
