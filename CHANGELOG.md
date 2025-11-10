@@ -25,6 +25,18 @@ Este CHANGELOG documenta:
 
 ---
 
+## [Unreleased]
+
+### 🐛 Corregido (Fixed)
+- **Bug crítico de scraping: Solo extraía 5 reseñas por profesor**
+  - Corregida indentación incorrecta en `src/mp/scrape_prof.py`
+  - El código de guardado estaba dentro del bucle `for`, causando return prematuro
+  - Ahora extrae todas las reseñas de todas las páginas correctamente
+  - Ejemplo: Esiquio Gutierrez ahora extrae 153 reseñas (31 páginas) en lugar de 5
+  - Regresión introducida en v1.2.0 (PR #8), funcionalidad restaurada de v1.0.0
+
+---
+
 ## [1.1.1] - 2025-11-09
 
 ### ✅ Añadido (Added)
