@@ -55,9 +55,9 @@ check_file "docker-compose.yml"
 check_file ".env.docker"
 check_file "Makefile"
 check_file ".dockerignore"
-check_file "scripts/setup_mongo_user.sh"
+check_file "scripts/init_mongo.js"
 check_file "docs/DOCKER_SETUP.md"
-check_file "docs/RESUMEN_IMPLEMENTACION_DOCKER.md"
+check_file "docs/RESUMEN_V1.1.1.md"
 
 echo ""
 
@@ -82,11 +82,10 @@ echo ""
 echo -e "${BLUE}Paso 3: Verificando permisos de scripts...${NC}"
 echo ""
 
-if [ -x "scripts/setup_mongo_user.sh" ]; then
-    echo -e "${GREEN}✅${NC} Script ejecutable: scripts/setup_mongo_user.sh"
+if [ -f "scripts/init_mongo.js" ]; then
+    echo -e "${GREEN}✅${NC} Script de inicialización Mongo encontrado: scripts/init_mongo.js"
 else
-    echo -e "${YELLOW}⚠️${NC}  Script no ejecutable: scripts/setup_mongo_user.sh"
-    echo -e "   Ejecutar: chmod +x scripts/setup_mongo_user.sh"
+    echo -e "${RED}❌${NC} Script de inicialización Mongo faltante: scripts/init_mongo.js"
 fi
 
 echo ""
