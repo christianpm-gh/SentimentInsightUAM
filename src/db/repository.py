@@ -103,30 +103,50 @@ async def obtener_o_crear_curso(session: AsyncSession, nombre: str) -> Optional[
     """
     Obtiene un curso existente o lo crea si no existe.
     
+    Usa el diccionario de normalización para unificar variantes de materias.
+    Por ejemplo: "POO", "poo", "prog orientada a obj" → "Programación Orientada a Objetos"
+    
     Args:
         session: Sesión de SQLAlchemy
-        nombre: Nombre del curso
+        nombre: Nombre del curso (puede ser variante)
         
     Returns:
         Curso o None si el nombre es inválido
+        
+    Ejemplo:
+        >>> await obtener_o_crear_curso(session, "POO")
+        <Curso(nombre='Programación Orientada a Objetos')>
+        >>> await obtener_o_crear_curso(session, "---")
+        None
     """
-    # Validar nombre
-    if not nombre or nombre.strip() in ['', '---', 'N/A']:
+    # Validar nombre (rechazar valores inválidos comunes)
+    if not nombre or nombre.strip() in ['', '---', 'N/A', 'N.A.', 'n/a']:
         return None
     
-    nombre_norm = normalizar_texto(nombre)
+    # Normalizar usando el nuevo normalizador fuzzy
+    from src.utils.normalization import CourseNormalizer
+    normalizer = CourseNormalizer()
     
-    # Buscar curso existente
+    nombre_oficial, score, is_match = normalizer.normalize(nombre)
+    
+    # Si no hay match, usamos el nombre original limpio
+    # (Opcional: podríamos rechazarlo si queremos ser estrictos)
+    nombre_final = nombre_oficial if is_match else nombre.strip()
+    
+    # Normalizar para búsqueda en BD (lowercase sin acentos)
+    nombre_norm_bd = normalizar_texto(nombre_final)
+    
+    # Buscar curso existente por nombre normalizado
     result = await session.execute(
-        select(Curso).where(Curso.nombre_normalizado == nombre_norm)
+        select(Curso).where(Curso.nombre_normalizado == nombre_norm_bd)
     )
     curso = result.scalar_one_or_none()
     
     if curso is None:
-        # Crear nuevo curso
+        # Crear nuevo curso con nombre oficial
         curso = Curso(
-            nombre=nombre.strip(),
-            nombre_normalizado=nombre_norm,
+            nombre=nombre_final,  # Nombre oficial normalizado
+            nombre_normalizado=nombre_norm_bd,
             departamento='Sistemas'
         )
         session.add(curso)
@@ -296,13 +316,22 @@ async def guardar_profesor_completo(data: Dict[str, Any], url_misprofesores: Opt
                 
                 # d) Insertar opinión en MongoDB (solo si hay comentario)
                 if comentario:
+                    # Normalizar curso para MongoDB también
+                    curso_mongo = review.get('course') or ''
+                    if curso_mongo:
+                        from src.utils.normalization import CourseNormalizer
+                        norm_mongo = CourseNormalizer()
+                        curso_norm, _, is_match = norm_mongo.normalize(curso_mongo)
+                        if is_match:
+                            curso_mongo = curso_norm
+
                     opinion_doc = {
                         'profesor_id': profesor.id,
                         'profesor_nombre': nombre_limpio,
                         'profesor_slug': slug,
                         'resenia_id': resenia.id,
                         'fecha_opinion': datetime.combine(fecha_resenia, datetime.min.time()),
-                        'curso': review.get('course') or '',
+                        'curso': curso_mongo,
                         'comentario': comentario,
                         'idioma': 'es',
                         'longitud_caracteres': len(comentario),

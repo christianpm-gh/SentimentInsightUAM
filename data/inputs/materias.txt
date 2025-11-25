@@ -1,0 +1,179 @@
+Introducción a la Física
+Cinemática y Dinámica de Partículas
+Laboratorio de Movimiento de una Partícula
+Dinámica del Cuerpo Rígido
+Laboratorio del Cuerpo Rígido y Oscilaciones
+Introducción a la Electrostática y Magnetostática
+Complementos de Matemáticas
+Introducción al Cálculo
+Cálculo Diferencial
+Cálculo Integral
+Ecuaciones Diferenciales Ordinarias
+Termodinámica
+Estructura Atómica y Enlace Químico
+Laboratorio de Reacciones Químicas
+Estructura y Propiedades de los Materiales en Ingeniería
+Laboratorio de Estructura y Propiedades de los Materiales
+Programación Estructurada
+Métodos Numéricos en Ingeniería
+Probabilidad y Estadística
+Introducción al Álgebra ineal
+Lógica
+Matemáticas Discretas
+Lenguajes y Autómatas
+Transformada de Laplace y Análisis de Fourier
+Arquitectura de Computadoras
+Laboratorio de Sistemas Digitales con Microprocesadores
+Microprocesadores
+Diseño Lógico
+Fundamentos de Redes de Computadoras
+Laboratorio de Diseño Lógico
+Diseño y Administración de Redes de Computadoras
+Microelectrónica
+Sistemas Operativos
+Análisis y Diseño de Algoritmos
+Almacenamiento y Estructuras de Archivos
+Algoritmos y Estructuras de Datos
+Programación Orientada a Objetos
+Sistemas Distribuidos
+Bases de Datos
+Análisis y Diseño de Sistemas de Información
+Compiladores
+Gráficas por Computadora
+Programación Visual Orientada a Eventos
+Laboratorio de Programación Orientada a Objetos
+Investigación de Operaciones I
+Introducción a la Ingeniería
+Introducción al Desarrollo Sustentable
+Taller de Expresión Oral y Escrita
+Taller de Planeación y Ejecución de Proyectos
+Retos del Desarrollo Nacional
+Innovación
+El Paisaje como Agente de los Asentamientos y de la Cultura
+Familia y Violencia en el México Contemporáneo
+Género y Sexualidad
+Poder y Género
+Administración y Economía Política de la Ciencia y la Tecnología
+Derechos Humanos
+Economía Mundial
+Ética y Valores
+Historia Social de México en el Siglo XX
+Responsabilidad Social Organizacional
+Comunicación en Proyectos Multidisciplinarios
+Herramientas para el Emprendedor
+Inserción Laboral
+Planeación Estratégica
+Proyectos de Inversión
+Historia del Arte
+Taller de Dibujo
+Taller de Fotografía
+Taller de Teatro
+Divulgación del Conocimiento
+Habilidades Creativas para el Ámbito Profesional
+Laboratorio de Usabilidad
+Narrativa para Medios Audiovisuales y Digitales
+Experiencia Inter y Multidisciplinar
+Temas Selectos Inter y Multidisciplinares I
+Temas Selectos Inter y Multidisciplinares II
+Ética y Legislación Informática
+Seminario de Integración enIngeniería en Computación
+Proyecto de Integración enIngeniería en Computación I
+Proyecto de Integración en Ingeniería en Computación II
+Introducción al Trabajo de Investigación en Ingeniería en Computación
+Trabajo de Investigación en Ingeniería en Computación
+Optativa Técnica de Movilidad I
+Optativa Técnica de Movilidad II
+Optativa Técnica de Movilidad III
+Optativa Técnica de Movilidad IV
+Optativa Técnica de Movilidad V
+Optativa Técnica de Movilidad VI
+Arquitectura e Integración de Aplicaciones Empresariales
+Administración de Proyectos de Software
+Patrones de Diseño de Software
+Programación Orientada a Servicios
+Taller de Desarrollo de Aplicaciones Web
+Integración de Servicios en Aplicaciones Empresariales
+Temas Selectos de Lenguajes de Programación
+Temas Selectos de Sistemas de Información
+Bases de Datos Distribuidas
+Combinatoria
+Teoría de la Computación
+Temas Selectos de Matemáticas Discretas
+Temas Selectos de Inteligencia Artificial
+Complejidad Computacional
+Inteligencia Artificial
+Inteligencia Computacional
+Taller de Análisis y Diseño de Algoritmos
+Teoría de Juegos
+Geometría Computacional
+Temas Selectos de Algoritmos
+Temas Selectos de Gráficas por Computadora
+Investigación de Operaciones II
+Criptografía
+Seguridad en Redes
+Temas Selectos de Redes de Computadoras I
+Temas Selectos de Redes de Computadoras II
+Redes Inalámbricas
+Integración de Redes de Voz y Datos
+Seguridad en los Sistemas de Información
+Temas Selectos de Seguridad en los Sistemas de Información
+Laboratorio de Sistemas Digitales con Microcontroladores
+Sistemas Digitales con Microcontroladores
+Laboratorio de Arquitectura de Computadoras
+Arquitecturas Paralelas de Computadoras
+Taller de Sistemas Embebidos
+Temas Selectos de Sistemas Embebidos
+Programación de Sistemas
+Taller de Mecatrónica
+Temas Selectos de Ingeniería Mecatrónica
+Laboratorio de Sistemas Digitales con Microcontroladores
+Sistemas Digitales con Microcontroladores
+Circuitos Electrónicos I
+Circuitos Electrónicos II
+Diseño de Sistemas Electrónicos
+Laboratorio de Circuitos Electrónicos I
+Laboratorio de Circuitos Electrónicos II
+Laboratorio de Diseño de Sistemas Electrónicos
+Circuitos Eléctricos I
+Circuitos Eléctricos II
+Laboratorio de Circuitos Eléctricos I
+Automatización Industrial
+Control Digital
+Laboratorio de Circuitos Eléctricos II
+Laboratorio de Control
+Teoría de Control
+Temas Selectos de Robótica
+Laboratorio de Mecanismos
+Dinámica de Máquinas
+Diseño de Mecanismos
+Manufactura Asistida por Computadora
+Mecanismos
+Dibujo Mecánico Asistido por Computadora
+Inteligencia Computacional
+Cálculo de Varias Variables
+Variable Compleja
+Análisis de Señales
+Procesamiento Digital de Señales
+Señales Aleatorias
+Teletráfico
+Evaluación Ambiental de Tecnologías
+Prevención y Minimización de la Contaminación Ambiental
+Retos Ambientales
+Elemento Finito
+Operación de Centros de Datos
+Taller de Productos de Software
+Temas Selectos de Ingeniería en Computación I
+Temas Selectos de Ingeniería en Computación II
+Calidad de Software
+Auditoria Informática
+Análisis de Decisiones II
+Análisis de Decisiones I
+Organización Industrial
+Administración de Proyectos
+Sistemas de Gestión de la Calidad
+Administración de la Calidad
+Desarrollo Organizacional
+Ingeniería Financiera
+Análisis y Diseño de Experimentos en Ingeniería
+Planeación Estratégica
+Estudio del Método del Trabajo
