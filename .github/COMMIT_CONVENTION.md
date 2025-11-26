@@ -137,6 +137,7 @@ git commit -m "fix(parser): corrige AttributeError en elementos None"
 | `mp` | Módulo MisProfesores | `src/mp/*.py` |
 | `uam` | Módulo directorio UAM | `src/uam/*.py` |
 | `cli` | Interfaz de línea de comandos | `src/cli.py` |
+| `db` | Módulos de base de datos | `src/db/*.py` |
 | `data` | Manejo de datos y persistencia | `data/` |
 | `docs` | Documentación del proyecto | `docs/`, `README.md` |
 
@@ -145,7 +146,6 @@ git commit -m "fix(parser): corrige AttributeError en elementos None"
 | Alcance | Descripción |
 |---------|-------------|
 | `api` | API REST con FastAPI |
-| `db` | Esquemas y migraciones de BD |
 | `bert` | Análisis de sentimiento |
 | `jobs` | Sistema de jobs programados |
 | `frontend` | Dashboard de visualización |
@@ -611,7 +611,7 @@ git push origin main --tags
 
 ---
 
-**Última actualización**: 2024-11-08  
+**Última actualización**: 2025-11-26  
 **Mantenido por**: Equipo SentimentInsightUAM
 
 ---
