@@ -1524,7 +1524,17 @@ Este documento proporciona una visión completa del proyecto SentimentInsightUAM
 
 ---
 
-**Fecha de Documentación**: 26 de Octubre, 2025  
-**Versión**: 1.0.0  
+**Fecha de Documentación**: 26 de Noviembre, 2025  
+**Versión**: 1.2.1  
 **Autor**: Equipo SentimentInsightUAM
+
+---
+
+## 📚 Documentación Relacionada
+
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Arquitectura del sistema
+- [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) - Guía de desarrollo
+- [DATABASE_DESIGN.md](./DATABASE_DESIGN.md) - Diseño de bases de datos
+- [DATABASE_SETUP.md](./DATABASE_SETUP.md) - Configuración de BD
+- [DOCKER_SETUP.md](./DOCKER_SETUP.md) - Configuración con Docker
 

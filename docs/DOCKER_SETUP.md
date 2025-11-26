@@ -1,6 +1,6 @@
 # Guía de Configuración con Docker
 
-**SentimentInsightUAM v1.1.1**
+**SentimentInsightUAM v1.2.1**
 
 Esta guía te ayudará a configurar rápidamente las bases de datos PostgreSQL y MongoDB usando Docker y Docker Compose.
 
@@ -678,6 +678,6 @@ docker system prune -a
 
 ---
 
-**Última actualización:** 2025-11-09  
-**Versión del proyecto:** 1.1.1  
+**Última actualización:** 2025-11-26  
+**Versión del proyecto:** 1.2.1  
 **Mantenedores:** Equipo SentimentInsightUAM - UAM Azcapotzalco

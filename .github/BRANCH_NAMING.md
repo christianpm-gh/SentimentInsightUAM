@@ -41,6 +41,7 @@ Este documento define la convención para nombrar ramas en el proyecto **Sentime
 - `mp` - Módulo MisProfesores (`src/mp/`)
 - `uam` - Módulo UAM (`src/uam/`)
 - `cli` - Interfaz CLI (`src/cli.py`)
+- `db` - Módulos de base de datos (`src/db/`)
 - `data` - Datos y persistencia (`data/`)
 - `docs` - Documentación general
 - `workflow` - Git workflow y procesos
@@ -48,7 +49,6 @@ Este documento define la convención para nombrar ramas en el proyecto **Sentime
 ### Alcances Futuros
 
 - `api` - API REST
-- `db` - Base de datos
 - `bert` - Análisis de sentimiento
 - `jobs` - Jobs programados
 - `frontend` - Dashboard

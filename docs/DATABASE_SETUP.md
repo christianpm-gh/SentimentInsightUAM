@@ -1,6 +1,6 @@
 # Guía de Configuración de Bases de Datos
 
-**SentimentInsightUAM v1.1.1**
+**SentimentInsightUAM v1.2.1**
 
 Esta guía detalla cómo configurar PostgreSQL y MongoDB para el sistema de persistencia de SentimentInsightUAM.
 
@@ -757,6 +757,6 @@ Una vez configuradas las bases de datos:
 
 ---
 
-**Versión**: 1.1.0  
-**Última actualización**: 2025-11-08  
+**Versión**: 1.2.1  
+**Última actualización**: 2025-11-26  
 **Mantenedores**: Equipo SentimentInsightUAM
