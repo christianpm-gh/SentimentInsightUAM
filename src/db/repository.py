@@ -3,8 +3,10 @@ Repositorio de persistencia para SentimentInsightUAM
 
 Contiene funciones para guardar datos del scraping en PostgreSQL y MongoDB.
 """
+import json
 import traceback
 from datetime import datetime, date
+from pathlib import Path
 from typing import Dict, Any, Optional
 from slugify import slugify
 
@@ -16,6 +18,101 @@ from .models import (
     Profesor, Perfil, Etiqueta, PerfilEtiqueta, Curso,
     ReseniaMetadata, ReseniaEtiqueta, HistorialScraping
 )
+
+
+# ============================================================================
+# MAPEO DE CURSOS UNIFICADO
+# ============================================================================
+# Cargar mapeo de cursos para normalización automática al insertar
+
+_CURSOS_MAPPING: Dict[str, Dict[str, Any]] = {}
+_CURSOS_MAPPING_LOADED = False
+
+
+def _cargar_mapeo_cursos():
+    """
+    Carga el mapeo de cursos desde cursos_unificado.json.
+    Solo se carga una vez (singleton).
+    """
+    global _CURSOS_MAPPING, _CURSOS_MAPPING_LOADED
+    
+    if _CURSOS_MAPPING_LOADED:
+        return
+    
+    mapping_path = Path(__file__).parent.parent.parent / 'data' / 'inputs' / 'cursos_unificado.json'
+    
+    if mapping_path.exists():
+        try:
+            with open(mapping_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            _CURSOS_MAPPING = data.get('mapping', {})
+            print(f"  📚 Mapeo de cursos cargado: {len(_CURSOS_MAPPING)} entradas")
+        except Exception as e:
+            print(f"  ⚠️ Error cargando mapeo de cursos: {e}")
+            _CURSOS_MAPPING = {}
+    else:
+        print(f"  ⚠️ Archivo de mapeo no encontrado: {mapping_path}")
+        _CURSOS_MAPPING = {}
+    
+    _CURSOS_MAPPING_LOADED = True
+
+
+def obtener_curso_normalizado(nombre_curso: str) -> str:
+    """
+    Obtiene el nombre normalizado de un curso usando el mapeo unificado.
+    
+    Args:
+        nombre_curso: Nombre original del curso
+        
+    Returns:
+        str: Nombre normalizado o el original si no está en el mapeo
+    """
+    _cargar_mapeo_cursos()
+    
+    if not nombre_curso:
+        return nombre_curso
+    
+    # Buscar en el mapeo (case-sensitive primero)
+    if nombre_curso in _CURSOS_MAPPING:
+        return _CURSOS_MAPPING[nombre_curso].get('normalizado_a', nombre_curso)
+    
+    # Buscar case-insensitive
+    nombre_lower = nombre_curso.lower()
+    for key, value in _CURSOS_MAPPING.items():
+        if key.lower() == nombre_lower:
+            return value.get('normalizado_a', nombre_curso)
+    
+    # No encontrado, retornar original
+    return nombre_curso
+
+
+# ============================================================================
+# COMENTARIOS INVÁLIDOS
+# ============================================================================
+# Patrones de comentarios que no deben guardarse en MongoDB
+# Son placeholders o contenido bloqueado de MisProfesores.com
+COMENTARIOS_INVALIDOS = frozenset([
+    '[Comentario esperando revisión]',
+    '[Comentario bloqueado]',
+])
+
+
+def es_comentario_valido(comentario: str) -> bool:
+    """
+    Verifica si un comentario es válido para análisis de sentimiento.
+    
+    Retorna False si el comentario es un placeholder o está bloqueado.
+    
+    Args:
+        comentario: Texto del comentario
+        
+    Returns:
+        bool: True si es válido, False si debe ignorarse
+    """
+    if not comentario or not comentario.strip():
+        return False
+    
+    return comentario not in COMENTARIOS_INVALIDOS
 
 
 def limpiar_nombre_profesor(nombre_completo: str) -> str:
@@ -103,38 +200,24 @@ async def obtener_o_crear_curso(session: AsyncSession, nombre: str) -> Optional[
     """
     Obtiene un curso existente o lo crea si no existe.
     
-    Usa el diccionario de normalización para unificar variantes de materias.
-    Por ejemplo: "POO", "poo", "prog orientada a obj" → "Programación Orientada a Objetos"
+    Usa el mapeo unificado de cursos_unificado.json para normalizar.
     
     Args:
         session: Sesión de SQLAlchemy
-        nombre: Nombre del curso (puede ser variante)
+        nombre: Nombre del curso
         
     Returns:
         Curso o None si el nombre es inválido
-        
-    Ejemplo:
-        >>> await obtener_o_crear_curso(session, "POO")
-        <Curso(nombre='Programación Orientada a Objetos')>
-        >>> await obtener_o_crear_curso(session, "---")
-        None
     """
     # Validar nombre (rechazar valores inválidos comunes)
-    if not nombre or nombre.strip() in ['', '---', 'N/A', 'N.A.', 'n/a']:
+    if not nombre or nombre.strip() in ['', '-', '--', '---', '-----', '...', '0', 'N/A', 'N.A.', 'n/a']:
         return None
     
-    # Normalizar usando el nuevo normalizador fuzzy
-    from src.utils.normalization import CourseNormalizer
-    normalizer = CourseNormalizer()
+    nombre_limpio = nombre.strip()
     
-    nombre_oficial, score, is_match = normalizer.normalize(nombre)
-    
-    # Si no hay match, usamos el nombre original limpio
-    # (Opcional: podríamos rechazarlo si queremos ser estrictos)
-    nombre_final = nombre_oficial if is_match else nombre.strip()
-    
-    # Normalizar para búsqueda en BD (lowercase sin acentos)
-    nombre_norm_bd = normalizar_texto(nombre_final)
+    # Obtener nombre normalizado usando el mapeo unificado
+    nombre_normalizado = obtener_curso_normalizado(nombre_limpio)
+    nombre_norm_bd = normalizar_texto(nombre_normalizado)
     
     # Buscar curso existente por nombre normalizado
     result = await session.execute(
@@ -143,14 +226,15 @@ async def obtener_o_crear_curso(session: AsyncSession, nombre: str) -> Optional[
     curso = result.scalar_one_or_none()
     
     if curso is None:
-        # Crear nuevo curso con nombre oficial
+        # Crear nuevo curso con el nombre normalizado
         curso = Curso(
-            nombre=nombre_final,  # Nombre oficial normalizado
+            nombre=nombre_normalizado,  # Usar nombre normalizado, no el original
             nombre_normalizado=nombre_norm_bd,
             departamento='Sistemas'
         )
         session.add(curso)
         await session.flush()
+        print(f"    📗 Nuevo curso creado: '{nombre_limpio}' → '{nombre_normalizado}'")
     
     return curso
 
@@ -264,16 +348,19 @@ async def guardar_profesor_completo(data: Dict[str, Any], url_misprofesores: Opt
             # 5. Procesar reseñas
             reviews = data.get('reviews', [])
             resenias_insertadas = 0
+            resenias_duplicadas = 0
             opiniones_insertadas = 0
             
             for review in reviews:
                 # a) Obtener o crear curso
                 curso = None
-                if review.get('course'):
-                    curso = await obtener_o_crear_curso(session, review['course'])
+                curso_nombre_original = review.get('course', '')
+                curso_nombre_normalizado = obtener_curso_normalizado(curso_nombre_original) if curso_nombre_original else None
                 
-                # b) Crear reseña en PostgreSQL
-                # Convertir fecha string a date object
+                if curso_nombre_original:
+                    curso = await obtener_o_crear_curso(session, curso_nombre_original)
+                
+                # b) Convertir fecha string a date object
                 fecha_resenia_str = review.get('date')
                 if fecha_resenia_str:
                     if isinstance(fecha_resenia_str, str):
@@ -286,7 +373,26 @@ async def guardar_profesor_completo(data: Dict[str, Any], url_misprofesores: Opt
                     fecha_resenia = datetime.now().date()
                 
                 comentario = review.get('comment', '')
+                tiene_comentario_valido = es_comentario_valido(comentario)
                 
+                # c) Verificar si la reseña ya existe (evitar duplicados)
+                # Criterio: mismo profesor + fecha + curso + calificación
+                query_duplicado = select(ReseniaMetadata).where(
+                    ReseniaMetadata.profesor_id == profesor.id,
+                    ReseniaMetadata.fecha_resenia == fecha_resenia,
+                    ReseniaMetadata.calidad_general == review.get('overall')
+                )
+                if curso:
+                    query_duplicado = query_duplicado.where(ReseniaMetadata.curso_id == curso.id)
+                
+                result_dup = await session.execute(query_duplicado)
+                resenia_existente = result_dup.scalar_one_or_none()
+                
+                if resenia_existente:
+                    resenias_duplicadas += 1
+                    continue  # Saltar reseña duplicada
+                
+                # d) Crear reseña en PostgreSQL
                 resenia = ReseniaMetadata(
                     profesor_id=profesor.id,
                     curso_id=curso.id if curso else None,
@@ -297,14 +403,14 @@ async def guardar_profesor_completo(data: Dict[str, Any], url_misprofesores: Opt
                     asistencia=review.get('attendance'),
                     calificacion_recibida=review.get('grade_received'),
                     nivel_interes=review.get('interest'),
-                    tiene_comentario=bool(comentario),
-                    longitud_comentario=len(comentario) if comentario else 0,
+                    tiene_comentario=tiene_comentario_valido,
+                    longitud_comentario=len(comentario) if tiene_comentario_valido else 0,
                     fuente='misprofesores.com'
                 )
                 session.add(resenia)
                 await session.flush()  # Necesario para obtener resenia.id
                 
-                # c) Procesar etiquetas de la reseña
+                # e) Procesar etiquetas de la reseña
                 for tag_name in review.get('tags', []):
                     etiqueta = await obtener_o_crear_etiqueta(session, tag_name)
                     
@@ -314,51 +420,56 @@ async def guardar_profesor_completo(data: Dict[str, Any], url_misprofesores: Opt
                     )
                     session.add(resenia_etiqueta)
                 
-                # d) Insertar opinión en MongoDB (solo si hay comentario)
-                if comentario:
-                    # Normalizar curso para MongoDB también
-                    curso_mongo = review.get('course') or ''
-                    if curso_mongo:
-                        from src.utils.normalization import CourseNormalizer
-                        norm_mongo = CourseNormalizer()
-                        curso_norm, _, is_match = norm_mongo.normalize(curso_mongo)
-                        if is_match:
-                            curso_mongo = curso_norm
-
-                    opinion_doc = {
+                # f) Insertar opinión en MongoDB (solo si hay comentario válido)
+                if tiene_comentario_valido:
+                    # Verificar duplicado en MongoDB también
+                    opinion_existente = await mongo_db.opiniones.find_one({
                         'profesor_id': profesor.id,
-                        'profesor_nombre': nombre_limpio,
-                        'profesor_slug': slug,
-                        'resenia_id': resenia.id,
-                        'fecha_opinion': datetime.combine(fecha_resenia, datetime.min.time()),
-                        'curso': curso_mongo,
-                        'comentario': comentario,
-                        'idioma': 'es',
-                        'longitud_caracteres': len(comentario),
-                        'longitud_palabras': len(comentario.split()),
-                        'sentimiento_general': {
-                            'analizado': False,
-                            'clasificacion': None,
-                            'pesos': None,
-                            'confianza': None
-                        },
-                        'categorizacion': {
-                            'analizado': False
-                        },
-                        'fecha_extraccion': datetime.now(),
-                        'fuente': 'misprofesores.com',
-                        'version_scraper': '1.2.0'
-                    }
+                        'comentario': comentario
+                    })
                     
-                    mongo_result = await mongo_db.opiniones.insert_one(opinion_doc)
-                    
-                    # e) Vincular MongoDB con PostgreSQL
-                    resenia.mongo_opinion_id = str(mongo_result.inserted_id)
-                    opiniones_insertadas += 1
+                    if opinion_existente:
+                        # Ya existe, solo vincular
+                        resenia.mongo_opinion_id = str(opinion_existente['_id'])
+                    else:
+                        # Crear nueva opinión con curso normalizado
+                        opinion_doc = {
+                            'profesor_id': profesor.id,
+                            'profesor_nombre': nombre_limpio,
+                            'profesor_slug': slug,
+                            'resenia_id': resenia.id,
+                            'fecha_opinion': datetime.combine(fecha_resenia, datetime.min.time()),
+                            'curso': curso_nombre_original,  # Curso original del scraping
+                            'curso_normalizado': curso_nombre_normalizado,  # Curso normalizado
+                            'comentario': comentario,
+                            'idioma': 'es',
+                            'longitud_caracteres': len(comentario),
+                            'longitud_palabras': len(comentario.split()),
+                            'sentimiento_general': {
+                                'analizado': False,
+                                'clasificacion': None,
+                                'pesos': None,
+                                'confianza': None
+                            },
+                            'categorizacion': {
+                                'analizado': False
+                            },
+                            'fecha_extraccion': datetime.now(),
+                            'fuente': 'misprofesores.com',
+                            'version_scraper': '1.2.0'
+                        }
+                        
+                        mongo_result = await mongo_db.opiniones.insert_one(opinion_doc)
+                        
+                        # Vincular MongoDB con PostgreSQL
+                        resenia.mongo_opinion_id = str(mongo_result.inserted_id)
+                        opiniones_insertadas += 1
                 
                 resenias_insertadas += 1
             
             print(f"  → {resenias_insertadas} reseñas insertadas en PostgreSQL")
+            if resenias_duplicadas > 0:
+                print(f"  → {resenias_duplicadas} reseñas duplicadas omitidas")
             print(f"  → {opiniones_insertadas} opiniones insertadas en MongoDB")
             
             # 6. Registrar en historial de scraping

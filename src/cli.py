@@ -5,12 +5,14 @@ Este módulo proporciona comandos para:
 1. Obtener nombres de profesores del directorio UAM Azcapotzalco
 2. Scrapear perfiles y reseñas de profesores desde MisProfesores.com
 3. Scrapear todos los profesores con caché inteligente
+4. Mostrar estado de las bases de datos
 
 Uso:
     python -m src.cli nombres-uam              # Obtener lista de profesores UAM
     python -m src.cli prof                     # Seleccionar profesor de menú interactivo
     python -m src.cli prof --name "Nombre"     # Scrapear profesor específico
     python -m src.cli scrape-all               # Scrapear todos los profesores
+    python -m src.cli db-sample                # Mostrar un registro de cada tabla
 """
 import argparse
 import asyncio
@@ -163,6 +165,171 @@ async def scrape_all_professors() -> None:
     print("="*80)
 
 
+async def show_db_samples() -> None:
+    """
+    Muestra un registro de ejemplo de cada tabla en PostgreSQL y MongoDB.
+    """
+    from src.db import get_db_session, get_mongo_db
+    from src.db.models import (
+        Profesor, Perfil, Etiqueta, PerfilEtiqueta, Curso,
+        ReseniaMetadata, ReseniaEtiqueta, HistorialScraping
+    )
+    from sqlalchemy import select
+    
+    print("=" * 80)
+    print("MUESTRAS DE REGISTROS EN BASES DE DATOS")
+    print("=" * 80)
+    
+    # ========================================================================
+    # PostgreSQL
+    # ========================================================================
+    print("\n🐘 POSTGRESQL")
+    print("-" * 80)
+    
+    async with get_db_session() as session:
+        # Profesor
+        result = await session.execute(select(Profesor).limit(1))
+        prof = result.scalar_one_or_none()
+        print("\n📌 PROFESORES:")
+        if prof:
+            print(f"   id: {prof.id}")
+            print(f"   nombre_completo: {prof.nombre_completo}")
+            print(f"   nombre_limpio: {prof.nombre_limpio}")
+            print(f"   slug: {prof.slug}")
+            print(f"   departamento: {prof.departamento}")
+            print(f"   activo: {prof.activo}")
+        else:
+            print("   (vacía)")
+        
+        # Perfil
+        result = await session.execute(select(Perfil).limit(1))
+        perfil = result.scalar_one_or_none()
+        print("\n📌 PERFILES:")
+        if perfil:
+            print(f"   id: {perfil.id}")
+            print(f"   profesor_id: {perfil.profesor_id}")
+            print(f"   calidad_general: {perfil.calidad_general}")
+            print(f"   dificultad: {perfil.dificultad}")
+            print(f"   porcentaje_recomendacion: {perfil.porcentaje_recomendacion}")
+            print(f"   total_resenias_encontradas: {perfil.total_resenias_encontradas}")
+        else:
+            print("   (vacía)")
+        
+        # Curso
+        result = await session.execute(select(Curso).limit(1))
+        curso = result.scalar_one_or_none()
+        print("\n📌 CURSOS:")
+        if curso:
+            print(f"   id: {curso.id}")
+            print(f"   nombre: {curso.nombre}")
+            print(f"   nombre_normalizado: {curso.nombre_normalizado}")
+            print(f"   departamento: {curso.departamento}")
+        else:
+            print("   (vacía)")
+        
+        # Etiqueta
+        result = await session.execute(select(Etiqueta).limit(1))
+        etiq = result.scalar_one_or_none()
+        print("\n📌 ETIQUETAS:")
+        if etiq:
+            print(f"   id: {etiq.id}")
+            print(f"   etiqueta: {etiq.etiqueta}")
+            print(f"   etiqueta_normalizada: {etiq.etiqueta_normalizada}")
+            print(f"   categoria: {etiq.categoria}")
+        else:
+            print("   (vacía)")
+        
+        # ReseniaMetadata
+        result = await session.execute(select(ReseniaMetadata).limit(1))
+        resenia = result.scalar_one_or_none()
+        print("\n📌 RESENIAS_METADATA:")
+        if resenia:
+            print(f"   id: {resenia.id}")
+            print(f"   profesor_id: {resenia.profesor_id}")
+            print(f"   curso_id: {resenia.curso_id}")
+            print(f"   fecha_resenia: {resenia.fecha_resenia}")
+            print(f"   calidad_general: {resenia.calidad_general}")
+            print(f"   facilidad: {resenia.facilidad}")
+            print(f"   tiene_comentario: {resenia.tiene_comentario}")
+            print(f"   mongo_opinion_id: {resenia.mongo_opinion_id}")
+        else:
+            print("   (vacía)")
+        
+        # PerfilEtiqueta
+        result = await session.execute(select(PerfilEtiqueta).limit(1))
+        pe = result.scalar_one_or_none()
+        print("\n📌 PERFIL_ETIQUETAS:")
+        if pe:
+            print(f"   id: {pe.id}")
+            print(f"   perfil_id: {pe.perfil_id}")
+            print(f"   etiqueta_id: {pe.etiqueta_id}")
+            print(f"   contador: {pe.contador}")
+        else:
+            print("   (vacía)")
+        
+        # ReseniaEtiqueta
+        result = await session.execute(select(ReseniaEtiqueta).limit(1))
+        re = result.scalar_one_or_none()
+        print("\n📌 RESENIA_ETIQUETAS:")
+        if re:
+            print(f"   id: {re.id}")
+            print(f"   resenia_id: {re.resenia_id}")
+            print(f"   etiqueta_id: {re.etiqueta_id}")
+        else:
+            print("   (vacía)")
+        
+        # HistorialScraping
+        result = await session.execute(select(HistorialScraping).limit(1))
+        hist = result.scalar_one_or_none()
+        print("\n📌 HISTORIAL_SCRAPING:")
+        if hist:
+            print(f"   id: {hist.id}")
+            print(f"   profesor_id: {hist.profesor_id}")
+            print(f"   estado: {hist.estado}")
+            print(f"   resenias_encontradas: {hist.resenias_encontradas}")
+            print(f"   resenias_nuevas: {hist.resenias_nuevas}")
+            print(f"   duracion_segundos: {hist.duracion_segundos}")
+        else:
+            print("   (vacía)")
+    
+    # ========================================================================
+    # MongoDB
+    # ========================================================================
+    print("\n" + "-" * 80)
+    print("🍃 MONGODB")
+    print("-" * 80)
+    
+    mongo_db = get_mongo_db()
+    
+    # Opiniones
+    opinion = await mongo_db.opiniones.find_one()
+    print("\n📌 OPINIONES:")
+    if opinion:
+        print(f"   _id: {opinion.get('_id')}")
+        print(f"   profesor_id: {opinion.get('profesor_id')}")
+        print(f"   profesor_nombre: {opinion.get('profesor_nombre')}")
+        print(f"   resenia_id: {opinion.get('resenia_id')}")
+        print(f"   curso: {opinion.get('curso')}")
+        print(f"   comentario: {opinion.get('comentario', '')[:100]}...")
+        print(f"   sentimiento_general.analizado: {opinion.get('sentimiento_general', {}).get('analizado')}")
+        print(f"   sentimiento_general.clasificacion: {opinion.get('sentimiento_general', {}).get('clasificacion')}")
+    else:
+        print("   (vacía)")
+    
+    # Sentimiento Cache
+    cache = await mongo_db.sentimiento_cache.find_one()
+    print("\n📌 SENTIMIENTO_CACHE:")
+    if cache:
+        print(f"   _id: {cache.get('_id')}")
+        for key, value in cache.items():
+            if key != '_id':
+                print(f"   {key}: {value}")
+    else:
+        print("   (vacía)")
+    
+    print("\n" + "=" * 80)
+
+
 def main() -> None:
     """
     Punto de entrada principal del CLI.
@@ -171,11 +338,12 @@ def main() -> None:
     - nombres-uam: Extrae y muestra nombres del directorio UAM
     - prof: Scrapea perfil de un profesor (interactivo o por nombre)
     - scrape-all: Scrapea todos los profesores con caché inteligente
+    - db-sample: Muestra un registro de cada tabla en las bases de datos
     """
     ap = argparse.ArgumentParser(
         description="SentimentInsightUAM - Scraping de reseñas de profesores UAM"
     )
-    ap.add_argument("cmd", choices=["nombres-uam", "prof", "scrape-all"],
+    ap.add_argument("cmd", choices=["nombres-uam", "prof", "scrape-all", "db-sample"],
                     help="Comando a ejecutar")
     ap.add_argument("--name", help="Nombre exacto del profesor a scrapear")
     args = ap.parse_args()
@@ -187,6 +355,10 @@ def main() -> None:
 
     if args.cmd == "scrape-all":
         asyncio.run(scrape_all_professors())
+        return
+
+    if args.cmd == "db-sample":
+        asyncio.run(show_db_samples())
         return
 
     # cmd == "prof"
